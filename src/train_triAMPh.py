@@ -224,35 +224,35 @@ def get_args():
         )
         parser.add_argument(
                 "--han_input_size",
-                help="Input length of the projected node vectors given to the Heterogeneous Graph Attention Network",
+                help="Input length of the projected node vectors given to the Heterogeneous Graph Attention Network.",
                 type=int,
                 required=False,
                 default=256
         )
         parser.add_argument(
                 "--han_hidden_size",
-                help="Length of the hidden/output node vectors of the Heterogeneous Graph Attention Network",
+                help="Length of the hidden/output node vectors of the Heterogeneous Graph Attention Network.",
                 type=int,
                 required=False,
                 default = 32
         )
         parser.add_argument(
                 "--n_heads",
-                help="Number of attention heads for Heterogeneous Graph Attention Network",
+                help="Number of attention heads for Heterogeneous Graph Attention Network.",
                 type=int,
                 required=False,
                 default = 4
         )
         parser.add_argument(
                 "--dropout",
-                help="Dropout percent for Heterogeneous Graph Attention Network",
+                help="Dropout percent for Heterogeneous Graph Attention Network.",
                 type=int,
                 required=False,
                 default = 30
         )
         parser.add_argument(
                 "--seed",
-                help="Dropout percent for Heterogeneous Graph Attention Network",
+                help="Random seed to be set.",
                 type=int,
                 required=False,
                 default = 0

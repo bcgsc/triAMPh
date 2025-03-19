@@ -15,17 +15,17 @@ def test_triAMPh(   data, path, weight_path,
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print("Device: ", device)
         if seed == 0:
-                set_seed(constants.SEED)
+                utils.set_seed(constants.SEED)
                 print(f'Seed set: {constants.SEED}')
         else:
-                set_seed(seed)
+                utils.set_seed(seed)
                 print(f'Seed set: {seed}')
         
-        timestamp = get_timestamp()
-        set_seed(constants.SEED)
-        print(f"Training started: {timestamp}")
+        timestamp = utils.get_timestamp()
+
+        print(f"Test started: {timestamp}")
         meta_paths = [["is_active", "is_susceptable"],["is_susceptable", "is_active"], ["is_similar_g", "is_susceptable"], ["is_similar_p", "is_active"]]
-        model = triAMP(meta_paths=meta_paths, 
+        model = triAMPh(meta_paths=meta_paths, 
                 genomic_embedding_size=genomic_emb_size,
                 protein_embedding_size=protein_emb_size,
                 han_in_size=han_in_size,
@@ -47,7 +47,7 @@ def test_triAMPh(   data, path, weight_path,
         with torch.no_grad():
                 pos_scores, neg_scores = model(data.amp_embeddings, data.target_embeddings, data.graphs[0], data.graphs[1], data.graphs[2], device)
                 utils.calc_metrics(pos_scores, neg_scores, acc, f1, precision, recall, threshold=threshold)
-        utils.save_confusion_matrix(path, prefix, 0, pos_scores, neg_scores)
+        utils.save_confusion_matrix(path, "test", 0, pos_scores, neg_scores)
         print(f"Test - Accuracy: {acc[0]}, F1: {f1[0]}, Precision: {precision[0]}, Recall: {recall[0]}")
         return True
 
@@ -139,21 +139,21 @@ def get_args():
         )
         parser.add_argument(
                 "--han_input_size",
-                help="Input length of the projected node vectors given to the Heterogeneous Graph Attention Network",
+                help="Input length of the projected node vectors given to the Heterogeneous Graph Attention Network.",
                 type=int,
                 required=False,
                 default=256
         )
         parser.add_argument(
                 "--han_hidden_size",
-                help="Length of the hidden/output node vectors of the Heterogeneous Graph Attention Network",
+                help="Length of the hidden/output node vectors of the Heterogeneous Graph Attention Network.",
                 type=int,
                 required=False,
                 default = 32
         )
         parser.add_argument(
                 "--n_heads",
-                help="Number of attention heads for Heterogeneous Graph Attention Network",
+                help="Number of attention heads for Heterogeneous Graph Attention Network.",
                 type=int,
                 required=False,
                 default = 4
@@ -161,7 +161,7 @@ def get_args():
         
         parser.add_argument(
                 "--seed",
-                help="Dropout percent for Heterogeneous Graph Attention Network",
+                help="Random seed to be set.",
                 type=int,
                 required=False,
                 default = 0
@@ -182,7 +182,7 @@ def main():
 
     test_triAMPh(data, args.output_dir, args.weight_path, 
                         args.threshold, 
-                        args.gen_emb_size, args.prot_emb_size, args.han_input_size, args.han_hidden_size, args.han_num_heads, False,
+                        args.gen_emb_size, args.prot_emb_size, args.han_input_size, args.han_hidden_size, args.n_heads, False,
                         args.seed)
 
 if __name__ == "__main__":
