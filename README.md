@@ -141,3 +141,12 @@ python src/test_triAMPh.py\
   --gen_emb_size 512 --prot_emb_size 1280
 ```
 
+# Expected Inputs:
+triAMPh expects the inputs in a specific format. In this section, the formatting will be discussed.
+
+## Edge Files:
+We expect edge files to contain peptide IDs under the column `ID`, peptide sequences under the column `Sequences`, and pathogen names under the column `Pathogens`. The format of a file is expected to be a `.csv`. 
+
+## Embedding Files:
+triAMPh expects embeddings to be 2D arrrays saved in a separate `.npy` file for each peptide/pathogen. Here, the important thing is to make the file names match with IDs/pathogen names specified in the edge file. 
+
