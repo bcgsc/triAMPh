@@ -1,0 +1,17 @@
+# PROTEIN LANGUAGE MODELS
+MAX_AA_PROTTRANS=4000
+MAX_SEQ_LEN_PROTTRANS=1000
+MAX_SEQ_LEN_ESM=1022
+MAX_TOKS_ESM=4096
+
+# GENOMIC LANGUAGE MODELS
+NT_MAX_NUCLEOTIDE_LENGTH=5000
+
+# GRAPH EDGE TYPES
+TO_AMP = ["is_similar_p", "is_susceptable"]
+TO_TARGET = ["is_similar_g", "is_active"]
+FROM_AMP = ["is_active", "is_similar_p"]
+FROM_TARGET = ["is_similar_g", "is_susceptable"]
+
+# UTILITIES
+SEED = 123
