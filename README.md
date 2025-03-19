@@ -153,3 +153,5 @@ We expect edge files to contain peptide IDs under the column `ID`, peptide seque
 ## Embedding Files:
 triAMPh expects embeddings to be 2D arrrays saved in a separate `.npy` file for each peptide/pathogen. Here, the important thing is to make the file names match with IDs/pathogen names specified in the edge file. 
 
+# Contact:
+Please use Github issues for problems related to the code and contact bucar at bcgsc.ca for further inquiries.
