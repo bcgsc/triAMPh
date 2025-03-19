@@ -5,7 +5,7 @@ triAMPh is a heteregenous graph attention network based species-specific antimic
 # Files: 
 * `data:` Contains the master data file used for training, validation, and testing.
   * `data/stratified:` Specifically contains the training, validation, test split as well as message passing portions of the master data for competitor method developers convenience.
-  * `data/protein_embs:` Contains the example peptide embeddings. For each peptide, a single .npy file that contains a 2D array (per token/amino acid) embeddings. We expect users to follow this format.
+  * `data/protein_embs:` Contains the example peptide embeddings. For each peptide, a single .npy file that contains a 2D array (per token/amino acid) embeddings. We expect users to follow this format. Here, we were only able to provide a subset of our trained peptides. If you want to reproduce the results please refer to [ESM2](https://github.com/facebookresearch/esm)'s `extract.py` script and generate per_token embeddings with their defualt model.
   * `data/genomic_embs:` Contains the example pathogen embeddings. For each pathogen, a single .npy file that contains a 2D array (per token/5.1kmer in our training scheme) embeddings. We expect users to follow this format.
   * `data/weights_selected:` Contains the weights from our hyperparameter tuning rounds we selected as our best performance providing one. It uses the default configuration of the model.
 * `imgs:` Contains the abstract images for the readme file.
@@ -150,6 +150,6 @@ triAMPh expects the inputs in a specific format. In this section, the formatting
 ## Edge Files:
 We expect edge files to contain peptide IDs under the column `ID`, peptide sequences under the column `Sequences`, and pathogen names under the column `Pathogens`. The format of a file is expected to be a `.csv`. 
 
-## Embedding Files:
+## Embedding Files:
 triAMPh expects embeddings to be 2D arrrays saved in a separate `.npy` file for each peptide/pathogen. Here, the important thing is to make the file names match with IDs/pathogen names specified in the edge file. 
 
