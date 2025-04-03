@@ -1,15 +1,17 @@
+"""Description of the file""" # TODO
+import os #TODO: Lauren said we usually put standard libraries first
+import gc
 import pandas as pd
 import numpy as np
-from scipy.sparse import csr_matrix, coo_matrix
-
-from dgl import heterograph
+from scipy.sparse import csr_matrix, coo_matrix # TODO: remove unused imports
+import torch
 from torch import randint, from_numpy
 from torch.nn.utils.rnn import pad_sequence
-import torch
-import utils
+from dgl import heterograph
+import utils 
 import constants
-import os
-import gc
+
+
 
 class triAMPhDataTest:
     def __init__(self, 
@@ -21,7 +23,7 @@ class triAMPhDataTest:
                 target_embedding_path:str,
                 triple_stats: bool = False
                 ):
-        
+        """Descriptions for each function"""
         self.positive_amp_target_path = positive_amp_target_path
         self.negative_amp_target_path = negative_amp_target_path
         self.positive_test_path = positive_test_path
@@ -33,10 +35,12 @@ class triAMPhDataTest:
             self.target_idx, self.target_embeddings, self.target_masks) = self.get_adjacency_matrices(triple_stats)
         self.graphs = self.build_graph_and_split_data()
 
+    # TODO: Lots of redundancy in code between amp_target and neg_amp_target - could make some sort of helper function to reduce inconsistencies as the code evolves over time
     def get_adjacency_matrices(self, triple_stats): # this assumes if there is a pathogen involved, there are both negative and positive edges for it!
+        """Descriptions for each function"""
         amp_target = pd.read_csv(self.positive_amp_target_path)
         neg_amp_target = pd.read_csv(self.negative_amp_target_path)
-        amp_target = amp_target[["ID", "Pathogens", "Sequence"]]
+        amp_target = amp_target[["ID", "Pathogens", "Sequence"]] 
         neg_amp_target = neg_amp_target[["ID", "Pathogens", "Sequence"]]
         amp_target["Merged"] = amp_target["Sequence"] + amp_target["Pathogens"]
         neg_amp_target["Merged"] = neg_amp_target["Sequence"] + neg_amp_target["Pathogens"]
@@ -56,7 +60,7 @@ class triAMPhDataTest:
 
         # ensure the test sequences are independent, the ones also occuring in the training set is removed
         test = test.loc[~(test["Merged"].isin(amp_target["Merged"].to_numpy())) & ~(test["Merged"].isin(neg_amp_target["Merged"].to_numpy()))]
-        neg_test = neg_test.loc[~(neg_test["Merged"].isin(neg_amp_target["Merged"].to_numpy()))&~(neg_test["Merged"].isin(amp_target["Merged"].to_numpy()))]
+        neg_test = neg_test.loc[~(neg_test["Merged"].isin(neg_amp_target["Merged"].to_numpy()))& ~(neg_test["Merged"].isin(amp_target["Merged"].to_numpy()))]
         if len(test) == 0:
             print("No positive independent test peptide-pathogen pairs!")
             return None
@@ -64,33 +68,33 @@ class triAMPhDataTest:
             print("No negative independent test peptide-pathogen pairs!")
             return None 
 
-
         # since there might be some matchings in amp-target file that does not have an embedding for either an amp or a target
         # we need to eliminate the lines that suffers from either on of the conditions
         amp_target["ID"] = amp_target["ID"].astype("str")
         amp_target = amp_target.loc[(amp_target["ID"].isin(amp_embeddings))]
+        amp_target = amp_target.loc[amp_target["Pathogens"].isin(target_embeddings)] # amp_target = amp_target.loc[amp_target["Pathogens"].isin(target_embeddings.keys())]
+
         neg_amp_target["ID"] = neg_amp_target["ID"].astype("str")
         neg_amp_target = neg_amp_target.loc[(neg_amp_target["ID"].isin(amp_embeddings))]
-        amp_target = amp_target.loc[amp_target["Pathogens"].isin(target_embeddings)] # amp_target = amp_target.loc[amp_target["Pathogens"].isin(target_embeddings.keys())]
         neg_amp_target = neg_amp_target.loc[neg_amp_target["Pathogens"].isin(target_embeddings)] # amp_target = amp_target.loc[amp_target["Pathogens"].isin(target_embeddings.keys())]
 
         test["ID"] = test["ID"].astype("str")
         test = test.loc[(test["ID"].isin(amp_embeddings))]
+        test = test.loc[test["Pathogens"].isin(target_embeddings)] # amp_target = amp_target.loc[amp_target["Pathogens"].isin(target_embeddings.keys())]
+
         neg_test["ID"] = neg_test["ID"].astype("str")
         neg_test = neg_test.loc[(neg_test["ID"].isin(amp_embeddings))]
-        
-        test = test.loc[test["Pathogens"].isin(target_embeddings)] # amp_target = amp_target.loc[amp_target["Pathogens"].isin(target_embeddings.keys())]
         neg_test = neg_test.loc[neg_test["Pathogens"].isin(target_embeddings)] # 
        
         # check vice versa as well
-        amp_embeddings = {}
+        amp_embeddings = {} # TODO: Maybe you should name tmp something more descriptive
         tmp = np.unique(np.concat([amp_target["ID"].to_numpy(), neg_amp_target["ID"].to_numpy(), test["ID"].to_numpy(), neg_test["ID"].to_numpy()]))
         print(f"Number of AMPs in the feature matrix:{len(tmp)}")
         for amp in tmp:
             amp_embeddings[amp] = np.load(os.path.join(self.amp_embedding_path, f"{amp}.npy"))
         
         target_embeddings = {}
-        tmp = np.unique(np.concat([amp_target["Pathogens"].to_numpy(), neg_amp_target["Pathogens"].to_numpy(), test["Pathogens"].to_numpy(), neg_test["Pathogens"].to_numpy()]))
+        tmp = np.unique(np.concat([amp_target["Pathogens"].to_numpy(), neg_amp_target["Pathogens"].to_numpy(), test["Pathogens"].to_numpy(), neg_test["Pathogens"].to_numpy()])) #TODO: I don't think you need .to_numpy() here? Not 100% sure though
         print(f"Number of Targets in the feature matrix:{len(tmp)}")
         for target in tmp:
             target_embeddings[target] = np.load(os.path.join(self.target_embedding_path, f"{target}.npy"))
@@ -108,7 +112,7 @@ class triAMPhDataTest:
         # since we might have peptides that are not active against any pathogen, we need to add those as empty pathogen columns as well
         empty_rows_mp = neg_amp_target[~neg_amp_target["ID"].isin(amp_target["ID"].to_numpy())].drop_duplicates( subset ='ID', keep = 'last').reset_index(drop = True) 
         empty_rows_mp["Pathogens"] = "" # empty as they are negative edges!
-        # test peptide-pathogen pairs have to be annotated as empyt as well
+        # test peptide-pathogen pairs have to be annotated as empty as well
         # we have to have all the peptides mentioned in the test in the graph as well 
         test_pep = pd.concat([test, neg_test])
         test_pep["Pathogens"] = ""
@@ -154,22 +158,21 @@ class triAMPhDataTest:
                 neg_test_adj[target]=0
         
         # Arrange columns and rows so that we have consistant indices and IDs 
+        #TODO: could probably move message_passing_adj = message_passing_adj.to_numpy() to the line above 
         message_passing_adj = message_passing_adj.reindex(columns=target_embeddings.keys(), index=amp_embeddings.keys())
         message_passing_adj = message_passing_adj.to_numpy()
         test_adj = test_adj.reindex(columns=target_embeddings.keys(), index=amp_embeddings.keys())
         test_adj = test_adj.to_numpy()
         neg_test_adj = neg_test_adj.reindex(columns=target_embeddings.keys(), index=amp_embeddings.keys())
         neg_test_adj = neg_test_adj.to_numpy()
-        
 
         # indices - consistent for amp & target pairs too
         amp_idx = {value: index for index, value in enumerate(amp_embeddings.keys())}
         target_idx = {value: index for index, value in enumerate(target_embeddings.keys())}
         
         print(f"Dimensions of Message Passing AMP-Target Adjacency Matrix: {message_passing_adj.shape}")
-       
-        
-        if not triple_stats:
+           
+        if not triple_stats: # TODO: what the heck is triple_stats
             amp_embeddings = [torch.mean(from_numpy(value), dim=0) for value in amp_embeddings.values()]
             target_embeddings = [torch.mean(from_numpy(value).view(-1, 512), dim=0) for value in target_embeddings.values()] # TODO automatic size instead of 512
         
@@ -245,7 +248,7 @@ class triAMPDataInductive:
                 triple_stats = False,
                 balance_negative: bool = False
                 ):
-        
+        """Descriptions for each function"""
         self.positive_amp_target_path = positive_amp_target_path
         self.negative_amp_target_path = negative_amp_target_path
         self.amp_embedding_path = amp_embedding_path
@@ -259,6 +262,7 @@ class triAMPDataInductive:
         
 
     def get_adjacency_matrices(self,triple_stats): # this assumes if there is a pathogen involved, there are both negative and positive edges for it!
+        """Descriptions for each function"""
         amp_target = pd.read_csv(self.positive_amp_target_path)
         neg_amp_target = pd.read_csv(self.negative_amp_target_path)
 
@@ -271,7 +275,7 @@ class triAMPDataInductive:
         # since there might be some matchings in amp-target file that does not have an embedding for either an amp or a target
         # we need to eliminate the lines that suffers from either on of the conditions
         print(f"Number of AMPs in folder:{len(set(amp_embeddings))}")
-        print(f"Number of AMPs in the positive link file:{len(set(amp_target['ID'].to_numpy()))}")
+        print(f"Number of AMPs in the positive link file:{len(set(amp_target['ID'].to_numpy()))}") 
         print(f"Number of AMPs in the negative link file:{len(set(neg_amp_target['ID'].to_numpy()))}")
         print(f"Number of AMPs in total (unique): {len(np.unique(np.append(amp_target['ID'].to_numpy(), neg_amp_target['ID'].to_numpy())))}")
 
@@ -282,13 +286,13 @@ class triAMPDataInductive:
 
         # check vice versa as well
         amp_embeddings = {}
-        tmp = np.unique(np.append(amp_target["ID"].to_numpy(), neg_amp_target["ID"].to_numpy()))
+        tmp = np.unique(np.append(amp_target["ID"].to_numpy(), neg_amp_target["ID"].to_numpy())) # TODO: rename tmp
         print(f"Number of AMPs in the feature matrix:{len(tmp)}")
         for amp in tmp:
             amp_embeddings[amp] = np.load(os.path.join(self.amp_embedding_path, f"{amp}.npy"))
         
         target_embeddings = {}
-        tmp = np.unique(np.append(amp_target["Pathogens"].to_numpy(), neg_amp_target["Pathogens"].to_numpy()))
+        tmp = np.unique(np.append(amp_target["Pathogens"].to_numpy(), neg_amp_target["Pathogens"].to_numpy())) # TODO: rename tmp 
         print(f"Number of Targets in the feature matrix:{len(tmp)}")
         for target in tmp:
             target_embeddings[target] = np.load(os.path.join(self.target_embedding_path, f"{target}.npy"))
@@ -297,7 +301,7 @@ class triAMPDataInductive:
         # since we might have peptides that are not active against any pathogen, we need to add those as empty pathogen columns as well
         empty_rows = neg_amp_target[~neg_amp_target["ID"].isin(amp_target["ID"].to_numpy())].drop_duplicates( subset = ['Sequence',"ID"], keep = 'last').reset_index(drop = True) 
         empty_rows.loc[:,"Pathogens"] = "" # empty as they are negative edges!
-        print(f"Empty rows len pos: {len(empty_rows)}")
+        print(f"Empty rows len pos: {len(empty_rows)}") # TODO: if this line is left in for final version, hard to understand
         amp_target = pd.concat([amp_target, empty_rows]).reset_index(drop = True) 
         amp_target_tmp = pd.concat([amp_target, empty_rows]) # TODO PLEASE CHECK THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         amp_target = amp_target.groupby(["ID"]).agg({"Pathogens": lambda x: x.tolist()})
@@ -306,8 +310,8 @@ class triAMPDataInductive:
         # same thing applies for the negative edges
         empty_rows = amp_target_tmp[~amp_target_tmp["ID"].isin(neg_amp_target["ID"].to_numpy())].drop_duplicates( subset = ['Sequence',"ID"], keep = 'last').reset_index(drop = True) 
         empty_rows.loc[:,"Pathogens"] = "" # empty as they are negative edges!
-        print(f"Empty rows len neg: {len(empty_rows)}")
-        neg_amp_target = pd.concat([neg_amp_target,empty_rows])
+        print(f"Empty rows len neg: {len(empty_rows)}") # TODO: if this line is left in for final version, hard to understand
+        neg_amp_target = pd.concat([neg_amp_target,empty_rows]).reset_index(drop = True) # TODO: I added reset index here too for consistency
         neg_amp_target = neg_amp_target.groupby(["ID"]).agg({"Pathogens": lambda x: x.tolist()})
         neg_amp_target_adj = pd.get_dummies(neg_amp_target["Pathogens"].explode()).groupby(level=0).sum()
         
@@ -345,13 +349,14 @@ class triAMPDataInductive:
         return (csr_matrix(amp_target_adj), csr_matrix(neg_amp_target_adj), amp_idx, amp_embeddings, amp_masks, target_idx, target_embeddings, target_masks) 
 
     def build_graph_and_split_data(self, mes_passing, balance_negative):
+        """Descriptions for each function"""
         # here instead of splitting edges, we split nodes --> inductive learning, but only peptide nodes
         utils.set_seed(constants.SEED)
         node_cnt = self.amp_target_adj.shape[0]
-        val_cnt = int(node_cnt * self.data_split[1])
+        val_cnt = int(node_cnt * self.data_split[1]) # TODO: you could save data_split[1], data_split[2], etc as more descriptive variables 
         train_cnt = node_cnt - val_cnt
         print(f'Node count: {node_cnt}')
-        if len(self.data_split) == 3:
+        if len(self.data_split) == 3: # TODO: isn't it always 3?
             test_cnt = int(node_cnt * self.data_split[2])
             train_cnt = train_cnt - test_cnt
         print(f'Training count: {train_cnt}')
@@ -365,7 +370,7 @@ class triAMPDataInductive:
         self.train_nodes = train_nodes
         val_nodes = nids[train_cnt:train_cnt+val_cnt]
         self.val_nodes = val_nodes
-        if len(self.data_split) == 3:
+        if len(self.data_split) == 3: 
             test_nodes = nids[train_cnt+val_cnt:]
             self.test_nodes = test_nodes
 
@@ -394,7 +399,7 @@ class triAMPDataInductive:
         eids = np.arange(len(training_edges[0]))
         eids = np.random.permutation(eids) 
         mp_cnt = int(len(training_edges[0]) * mes_passing)
-        train_mp_u, train_mp_v = training_edges[0][eids[:mp_cnt]], training_edges[1][eids[:mp_cnt]]
+        train_mp_u, train_mp_v = training_edges[0][eids[:mp_cnt]], training_edges[1][eids[:mp_cnt]] # TODO: are mp_set and pos set supposed to be the same?
         train_u, train_v =  training_edges[0][eids[mp_cnt:]], training_edges[1][eids[mp_cnt:]]
 
         eids = np.arange(len(val_edges[0]))
@@ -411,7 +416,6 @@ class triAMPDataInductive:
             test_u, test_v =  test_edges[0][eids[mp_cnt:]], test_edges[1][eids[mp_cnt:]]
 
         # control leaks
-        train_mp_set = set([str(u)+','+str(train_mp_v[i]) for i, u in enumerate(train_mp_u)])
         train_pos_set = set([str(u)+','+str(train_v[i]) for i, u in enumerate(train_u)])
         train_neg_set = set([str(u)+','+str(neg_training_edges[1][i]) for i, u in enumerate(neg_training_edges[0])])
 
@@ -457,7 +461,7 @@ class triAMPDataInductive:
 
 
         num_nodes_dict = {'AMP': len(set(train_nodes)), 'Target': len(set(edges[1]))}
-        print(num_nodes_dict)
+        print(num_nodes_dict) # TODO: probably want to delete at some point
         train_graph = heterograph({
             ("AMP", "is_similar_p", "AMP"): ([0], [0]),
             ("Target", "is_similar_g", "Target"): ([0], [0]),
@@ -532,7 +536,7 @@ class triAMPData:
                 triple_stats = False,
                 balance_negative = False
                 ):
-        
+        """Descriptions for each function"""
         self.positive_amp_target_path = positive_amp_target_path
         self.negative_amp_target_path = negative_amp_target_path
         self.amp_embedding_path = amp_embedding_path
@@ -544,7 +548,9 @@ class triAMPData:
         self.graphs = self.build_graph_and_split_data(mes_passing, balance_negative)
         
 
+# TODO: There's a lot of overlap between both functions - might be nice to reduce redundancy through shared helper functions?
     def get_adjacency_matrices(self, triple_stats): # this assumes if there is a pathogen involved, there are both negative and positive edges for it!
+        """Descriptions for each function"""
         amp_target = pd.read_csv(self.positive_amp_target_path)
         neg_amp_target = pd.read_csv(self.negative_amp_target_path)
 
@@ -569,14 +575,14 @@ class triAMPData:
 
         # check vice versa as well
         amp_embeddings = {}
-        tmp = np.unique(np.append(amp_target["ID"].to_numpy(), neg_amp_target["ID"].to_numpy()))
+        tmp = np.unique(np.append(amp_target["ID"].to_numpy(), neg_amp_target["ID"].to_numpy())) # TODO: rename tmp
         print(f"Number of AMPs in the feature matrix:{len(tmp)}")
-        print(f"Peptide embeddings cannot be found: {all_pep.difference(set(tmp))}")
+        print(f"Number of peptide embeddings that cannot be found: {all_pep.difference(set(tmp))}")
         for amp in tmp:
             amp_embeddings[amp] = np.load(os.path.join(self.amp_embedding_path, f"{amp}.npy"))
         
         target_embeddings = {}
-        tmp = np.unique(np.append(amp_target["Pathogens"].to_numpy(), neg_amp_target["Pathogens"].to_numpy()))
+        tmp = np.unique(np.append(amp_target["Pathogens"].to_numpy(), neg_amp_target["Pathogens"].to_numpy())) # TODO: rename tmp
         print(f"Number of Targets in the feature matrix:{len(tmp)}")
         for target in tmp:
             target_embeddings[target] = np.load(os.path.join(self.target_embedding_path, f"{target}.npy"))
@@ -585,7 +591,7 @@ class triAMPData:
         # since we might have peptides that are not active against any pathogen, we need to add those as empty pathogen columns as well
         empty_rows = neg_amp_target[~neg_amp_target["ID"].isin(amp_target["ID"].to_numpy())].drop_duplicates( subset = ['Sequence',"ID"], keep = 'last').reset_index(drop = True) 
         empty_rows.loc[:,"Pathogens"] = "" # empty as they are negative edges!
-        print(f"Empty rows len pos: {len(empty_rows)}")
+        print(f"Empty rows len pos: {len(empty_rows)}") # TODO: rewrite this line for added clarity
         amp_target = pd.concat([amp_target, empty_rows]).reset_index(drop = True) 
         amp_target_tmp = pd.concat([amp_target, empty_rows]) # TODO PLEASE CHECK THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         amp_target = amp_target.groupby(["ID"]).agg({"Pathogens": lambda x: x.tolist()})
@@ -595,7 +601,7 @@ class triAMPData:
         empty_rows = amp_target_tmp[~amp_target_tmp["ID"].isin(neg_amp_target["ID"].to_numpy())].drop_duplicates( subset = ['Sequence',"ID"], keep = 'last').reset_index(drop = True) 
         empty_rows.loc[:,"Pathogens"] = "" # empty as they are negative edges!
         print(f"Empty rows len neg: {len(empty_rows)}")
-        neg_amp_target = pd.concat([neg_amp_target,empty_rows])
+        neg_amp_target = pd.concat([neg_amp_target,empty_rows]).reset_index(drop = True) # TODO: added reset index
         neg_amp_target = neg_amp_target.groupby(["ID"]).agg({"Pathogens": lambda x: x.tolist()})
         neg_amp_target_adj = pd.get_dummies(neg_amp_target["Pathogens"].explode()).groupby(level=0).sum()
         
@@ -633,6 +639,7 @@ class triAMPData:
         return (csr_matrix(amp_target_adj), csr_matrix(neg_amp_target_adj), amp_idx, amp_embeddings, amp_masks, target_idx, target_embeddings, target_masks) 
 
     def build_graph_and_split_data(self, train_mes_passing, balance_negative):
+        """Descriptions for each function"""
         # since we are going to be classifying edges, we need to split the data based on the edges
         # we need to split the edges for the target-AMP pairs only! Also they need to be consistent with AMP-target and target-AMP links! 
         # we use target-target and peptide-peptide edges for message passing only!
@@ -742,4 +749,3 @@ class triAMPData:
         #del self.neg_amp_target_adj
         #gc.collect()
         return graphs
-

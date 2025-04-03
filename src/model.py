@@ -1,15 +1,16 @@
+from scipy.sparse import csr_matrix # I reordered imports
+from sklearn.metrics.pairwise import pairwise_distances
 import dgl
+import numpy as np
 import torch
 import torch.nn as nn
-from dgl.nn.pytorch import GATv2Conv, HeteroGraphConv
 import torch.nn.functional as F
+from dgl.nn.pytorch import GATv2Conv, HeteroGraphConv # TODO: remove unused imports
 import constants
-from sklearn.metrics.pairwise import pairwise_distances
-from scipy.sparse import csr_matrix
-import numpy as np
 
 # code adapted from dmlc/dgl/blob/master/examples/pytorch/han/model_hetero.py 
 class SemanticAttention(nn.Module):
+    """Class and function definitions!!!!!!""" # TODO
     def __init__(self, in_size, hidden_size=128):
         super().__init__()
         self.project = nn.Sequential(
@@ -22,7 +23,6 @@ class SemanticAttention(nn.Module):
         w = self.project(z).mean(0)  # (M, 1)
         beta = torch.softmax(w, dim=0)  # (M, 1)
         beta = beta.expand((z.shape[0],) + beta.shape)  # (N, M, 1)
-        #print(beta)
         return (beta * z).sum(1)  # (N, D * K)
 
 
@@ -58,6 +58,7 @@ class HANLayer(nn.Module):
         self.gat_layers = nn.ModuleList()
         for i in range(len(meta_paths)):
             self.gat_layers.append(
+                # TODO: if HeretoConv and Gatv2Conv are functionally different, could allow users to choose as an input
                 # can be replaced with HeteroConv
                 GATv2Conv(
                     in_size,
@@ -235,7 +236,6 @@ class triAMPh(nn.Module):
         g = self.complete_graph(g, p_emb, g_emb, 10, 10, device)
         ha, ht = self.graph_attention(g)
         
-
         return self.predictor(supervision_g, ha, ht, "is_active"), self.predictor(neg_g, ha, ht, "is_active")
 
 # adapted from https://www.dgl.ai/dgl_docs/guide/training-link.html
@@ -266,15 +266,15 @@ class triAMPhDotProd(nn.Module):
         super().__init__()
         self.graph_attention = HANLayer(meta_paths, han_in_size, han_hidden_size, han_num_heads, han_dropout)
         self.predictor = HeteroDotProductPredictor()
-        self.W1 = nn.Linear(genomic_embedding_size, han_in_size)
+        self.W1 = nn.Linear(genomic_embedding_size, han_in_size) # TODO: what's W? Maybe consider renaming
         self.W2 = nn.Linear(protein_embedding_size, han_in_size)
         self.relu = nn.ReLU()
         self.relu_after_w = relu_after_w
 
     def complete_graph(self, g, amp_emb_arr, target_emb_arr, cutoff, device):
-         # AMPs
+        # AMPs
         if torch.cuda.is_available():
-            amp_pdist = pairwise_distances(amp_emb_arr.detach().cpu().numpy(), metric="euclidean", n_jobs = 2)
+            amp_pdist = pairwise_distances(amp_emb_arr.detach().cpu().numpy(), metric="euclidean", n_jobs = 2) # TODO: have you considered using other distance metrics? i've used levenshtein distance for peptides before
         else:
             amp_pdist = pairwise_distances(amp_emb_arr.detach().numpy(), metric="euclidean", n_jobs = 2)
         amp_pdist_flat = amp_pdist.flatten()
@@ -315,7 +315,9 @@ class triAMPhDotProd(nn.Module):
             p_emb = self.W2(protein_embeddings)
             g_emb = self.W1(genomic_embeddings)
         
-        g = self.complete_graph(g, p_emb, g_emb, 10, device)
+        g = self.complete_graph(g, p_emb, g_emb, 10, device) # TODO: can make this an input param - probably best to not hardcode it here
         ha, ht = self.graph_attention(g)
 
         return self.predictor(supervision_g, ha, ht, "is_active"), self.predictor(neg_g, ha, ht, "is_active")
+    
+# TODO: again, there's some redundancy between triAMPh and triAMPhDotProd - could consider making some helper functions
