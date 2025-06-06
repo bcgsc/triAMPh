@@ -33,7 +33,7 @@ git clone https://github.com/bcgsc/triAMPh.git
 2. In order to run triAMPh, you need to download the dependencies specified in `triAMPh_env.yml`. Please run the following command to create the environment.
 
 ```
-conda env create -f triAMPh_env.yml.yml
+conda env create -f triAMPh_env.yml
 ```
 
 3. Activate the environment by running:
