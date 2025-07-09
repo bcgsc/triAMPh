@@ -1,4 +1,4 @@
-# triAMPh - TaRget Identification of AntiMicrobial Peptides with Heterogenious graph attention networks
+# triAMPh - TaRget Identification of AntiMicrobial Peptides with Heterogeneous graph attention networks
 triAMPh is a heteregenous graph attention network based species-specific antimicrobial bioactivity predictor. It also gives the users to flexibly define their own peptide and pathogen features. In this study, we used [ESM2](https://github.com/facebookresearch/esm) and [NucleotideTransformerv2](https://github.com/instadeepai/nucleotide-transformer) embeddings for peptides and pathogens respectively as their feature vectors. As a backbone, [this implementation](https://github.com/dmlc/dgl/tree/master/examples/pytorch/han) of [HAN paper](https://arxiv.org/abs/1903.07293) was adapted.
 
 # Files: 
