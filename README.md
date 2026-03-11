@@ -26,7 +26,7 @@ triAMPh is a heterogeneous graph attention network based species-specific antimi
 
 1. Please clone this repository by running:
 ```
-git clone https://github.com/bcgsc/triAMPh.git
+git clone https://github.com/BirolLab/triAMPh.git
 ```
 
 2. In order to run triAMPh, you need to download the dependencies specified in `triAMPh_env.yml`. Please run the following command to create the environment.
@@ -153,4 +153,4 @@ We expect edge files to contain peptide IDs under the column `ID`, peptide seque
 triAMPh expects embeddings to be 2D arrrays saved in a separate `.npy` file for each peptide/pathogen. Here, the important thing is to make the file names match with IDs/pathogen names specified in the edge file. 
 
 # Contact:
-Please use Github issues for problems related to the code and contact bucar at bcgsc.ca for further inquiries.
+Please use Github issues for problems related to the code and contact bucar at bccrc.ca for further inquiries.
